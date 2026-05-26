@@ -1,88 +1,68 @@
 import streamlit as st
 
 
-def render(inputs: dict) -> None:
-    """Shock Simulation tab — UI skeleton only, no service calls."""
+def render(inputs: dict, result=None) -> None:
     st.header("Shock Simulation")
-    st.caption(
-        "Stress-test the investment thesis against macro and sector shocks "
-        "before the committee finalises its vote."
-    )
+    st.caption("Stress-test the investment thesis against macro and sector shocks.")
 
-    if not inputs.get("run"):
-        _render_empty_state()
+    if result is None:
+        _empty_state()
         return
 
-    _render_simulation_skeleton(inputs)
+    sim = result.simulation
+    base = sim.base_case
 
-
-def _render_empty_state() -> None:
-    st.info(
-        "Define a shock scenario in the sidebar and click **Run IC Simulation**.",
-        icon="⚡",
-    )
-
-    with st.expander("How does Shock Simulation work?", expanded=False):
-        st.markdown(
-            """
-            1. You describe a macro or sector shock in the sidebar.
-            2. The **Shock Simulator** applies the shock parameters to the base-case financial model.
-            3. Each IC agent re-evaluates their position under the shock scenario.
-            4. Revised votes and an updated memo section are produced.
-
-            **Example shocks:**
-            - *Interest rates rise 200bps* → discount rate impact on valuation
-            - *Key competitor raises $500M* → market share and pricing pressure
-            - *Regulatory ban in EU* → addressable market reduction
-            """
-        )
-
-
-def _render_simulation_skeleton(inputs: dict) -> None:
-    shock = inputs.get("shock_input") or "No shock defined"
-    company = inputs["company_name"]
-
-    st.markdown(f"**Active shock:** `{shock}`")
+    st.markdown(f"**Active shock:** `{result.deal.shock_scenario or 'No shock defined'}`")
     st.divider()
 
     # ── Scenario comparison ───────────────────────────────────────────────────
-    st.subheader("Scenario Comparison")
-    col_base, col_shock = st.columns(2)
+    st.subheader("Scenario Comparison — IRR")
+    from src.services.visualization import plot_scenario_comparison, plot_tornado_chart, plot_irr_waterfall
+    fig_irr = plot_scenario_comparison(base, sim.shocked_scenarios, metric="irr")
+    st.plotly_chart(fig_irr, use_container_width=True)
 
-    with col_base:
-        with st.container(border=True):
-            st.markdown("#### Base Case")
-            st.metric("IRR", "—")
-            st.metric("MOIC", "—")
-            st.metric("EV / Revenue", "—")
-            st.caption("*Placeholder — base-case financials*")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("MOIC Comparison")
+        fig_moic = plot_scenario_comparison(base, sim.shocked_scenarios, metric="moic")
+        st.plotly_chart(fig_moic, use_container_width=True)
 
-    with col_shock:
-        with st.container(border=True):
-            st.markdown("#### Shock Case")
-            st.metric("IRR", "—", delta="—")
-            st.metric("MOIC", "—", delta="—")
-            st.metric("EV / Revenue", "—", delta="—")
-            st.caption("*Placeholder — shock-adjusted financials*")
+    with col2:
+        st.subheader("IRR Sensitivity Tornado")
+        fig_tornado = plot_tornado_chart(sim.tornado_bars, base.irr)
+        st.plotly_chart(fig_tornado, use_container_width=True)
 
-    # ── Waterfall chart placeholder ───────────────────────────────────────────
-    st.subheader("IRR Bridge — Base vs Shock")
-    st.markdown(
-        "*Placeholder — Plotly waterfall chart will render here "
-        "once the Shock Simulator service is connected.*"
-    )
-    st.bar_chart({"Base": [0], "Shock": [0]})  # empty chart to show layout
+    # ── Waterfall for worst shock ─────────────────────────────────────────────
+    if sim.shocked_scenarios:
+        worst = min(sim.shocked_scenarios, key=lambda s: s.irr or 0)
+        st.subheader(f"IRR Bridge — Base → {worst.label}")
+        fig_wf = plot_irr_waterfall(base, worst)
+        st.plotly_chart(fig_wf, use_container_width=True)
 
-    # ── Agent re-votes under shock ────────────────────────────────────────────
-    st.subheader(f"Agent Re-Votes Under Shock — {company}")
-    with st.container(border=True):
-        cols = st.columns(5)
-        agents = ["Lead Partner", "Financial Analyst", "Legal", "Risk Officer", "Portfolio Mgr"]
-        for col, agent in zip(cols, agents):
-            col.metric(agent, "—", delta="—")
-        st.caption("*Placeholder — revised votes from Shock Simulator will appear here.*")
+    # ── Scenario table ────────────────────────────────────────────────────────
+    st.subheader("Full Scenario Table")
+    rows = [
+        {
+            "Scenario": s.label,
+            "IRR": f"{(s.irr or 0)*100:.1f}%",
+            "MOIC": f"{s.moic:.2f}x",
+            "Exit Value ($M)": f"{s.exit_value_usd_m:.1f}",
+            "Exit Multiple": f"{s.exit_multiple:.1f}x",
+            "ΔIRR vs Base": f"{((s.irr or 0)-(base.irr or 0))*100:+.1f}pp",
+        }
+        for s in sim.shocked_scenarios
+    ]
+    st.dataframe(rows, use_container_width=True)
 
-    # ── Shock narrative ───────────────────────────────────────────────────────
-    st.subheader("Shock Impact Narrative")
-    with st.container(border=True):
-        st.markdown("*Placeholder — Risk Officer shock narrative will appear here.*")
+
+def _empty_state() -> None:
+    st.info("Define a shock scenario in the sidebar and click **Run IC Simulation**.", icon="⚡")
+    with st.expander("How does Shock Simulation work?"):
+        st.markdown("""
+        1. You describe a shock scenario in the sidebar.
+        2. The **Shock Simulator** applies the shock to the base-case financial model.
+        3. IRR / MOIC are recalculated deterministically — no LLM involved.
+        4. A tornado chart shows which parameters drive the most IRR variance.
+
+        **Supported shocks:** interest rate rise · FX change · market downturn
+        """)

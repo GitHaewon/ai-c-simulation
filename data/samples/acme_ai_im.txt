@@ -1,0 +1,51 @@
+ACME AI — INFORMATION MEMORANDUM
+Series B Fundraise | Confidential | December 2024
+
+=== EXECUTIVE SUMMARY ===
+
+Acme AI is an AI infrastructure company that provides GPU-accelerated model fine-tuning
+and inference optimisation services to enterprise customers. Founded in 2022, the company
+has grown from $0 to $12M ARR in 24 months and is raising a $30M Series B at a $120M
+pre-money valuation (10x forward revenue).
+
+=== FINANCIAL SUMMARY ===
+
+Revenue (FY2024):        $12.0M ARR  (+180% YoY from $4.3M in FY2023)
+Gross Margin:            72%
+EBITDA Margin:           -18% (investing in R&D and sales)
+Monthly Burn Rate:       $800K
+Cash Runway:             18 months (post-Series B: 36 months)
+Net Revenue Retention:   138%
+
+Unit Economics:
+  CAC (blended):         $42,000
+  LTV (estimated):       $310,000
+  LTV/CAC ratio:         7.4x
+  Payback period:        11 months
+
+Top 3 customers account for 61% of ARR (customer concentration risk).
+No single customer exceeds 30% of ARR.
+
+=== MARKET OPPORTUNITY ===
+
+Total Addressable Market (2024): $38B globally
+Projected TAM (2028):            $250B (38% CAGR)
+Serviceable Addressable Market:  $12B (enterprise AI infrastructure in North America + Europe)
+
+Hyperscaler AI capex grew 240% in 2024, driving demand for third-party optimisation services.
+Entry barriers include proprietary fine-tuning IP and a curated dataset of 2.1B tokens.
+
+=== TEAM ===
+
+CEO: Sarah Chen — former VP Engineering at DataBricks (IPO), Stanford CS PhD
+CTO: James Park — former Principal Researcher at DeepMind, 14 patents in model compression
+CPO: Amir Patel — former PM at Anthropic, early employee at Cohere
+
+12 full-time employees, 8 of whom are ML engineers.
+
+=== INVESTMENT TERMS ===
+
+Round size:              $30M
+Pre-money valuation:     $120M
+Lead investor:           [Target Fund]
+Use of proceeds:         60% R&D, 25% Sales & Marketing, 15% G&A

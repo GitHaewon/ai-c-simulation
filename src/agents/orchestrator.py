@@ -13,67 +13,41 @@ from src.models.state import ICState
 
 logger = logging.getLogger(__name__)
 
-# ── Node singletons ───────────────────────────────────────────────────────────
 
-_data_collection = DataCollectionAgent()
-_financial = FinancialAnalysisAgent()
-_risk = RiskAgent()
-_bull = BullAgent()
-_bear = BearAgent()
-_chairman = ChairmanAgent()
-
-
-def build_graph() -> StateGraph:
+def build_graph(client=None, retriever=None) -> object:
     """
-    Construct and compile the IC LangGraph workflow.
+    Build and compile the IC LangGraph workflow.
+    Pass ClaudeClient and HybridRetriever to enable real LLM + RAG execution.
 
-    Topology
-    --------
-    START
-      └─► data_collection
-               │
-         ┌─────┼──────┬──────────┐   ← parallel fan-out
-         ▼     ▼      ▼          ▼
-      financial risk  bull      bear
-         │     │      │          │
-         └─────┴──────┴──────────┘   ← fan-in (all must complete)
-                      │
-                   chairman
-                      │
-                     END
+    Topology: START → data_collection → [financial, risk, bull, bear] (parallel) → chairman → END
     """
     workflow = StateGraph(ICState)
 
-    # ── Register nodes ────────────────────────────────────────────────────────
-    workflow.add_node("data_collection", _data_collection)
-    workflow.add_node("financial_analysis", _financial)
-    workflow.add_node("risk", _risk)
-    workflow.add_node("bull", _bull)
-    workflow.add_node("bear", _bear)
-    workflow.add_node("chairman", _chairman)
+    workflow.add_node("data_collection",  DataCollectionAgent(client, retriever))
+    workflow.add_node("financial_analysis", FinancialAnalysisAgent(client, retriever))
+    workflow.add_node("risk",  RiskAgent(client, retriever))
+    workflow.add_node("bull",  BullAgent(client, retriever))
+    workflow.add_node("bear",  BearAgent(client, retriever))
+    workflow.add_node("chairman", ChairmanAgent(client, retriever))
 
-    # ── Edges: sequential entry ───────────────────────────────────────────────
     workflow.add_edge(START, "data_collection")
-
-    # ── Edges: fan-out (parallel execution) ──────────────────────────────────
-    for analysis_node in ("financial_analysis", "risk", "bull", "bear"):
-        workflow.add_edge("data_collection", analysis_node)
-
-    # ── Edges: fan-in (chairman waits for all four) ───────────────────────────
-    for analysis_node in ("financial_analysis", "risk", "bull", "bear"):
-        workflow.add_edge(analysis_node, "chairman")
-
-    # ── Exit ──────────────────────────────────────────────────────────────────
+    for node in ("financial_analysis", "risk", "bull", "bear"):
+        workflow.add_edge("data_collection", node)
+        workflow.add_edge(node, "chairman")
     workflow.add_edge("chairman", END)
 
     return workflow.compile()
 
 
-def run_ic_simulation(deal: DealInput) -> ICState:
-    """Entry point — build graph, inject deal input, return final state."""
-    graph = build_graph()
+def run_ic_simulation(
+    deal: DealInput,
+    client=None,
+    retriever=None,
+) -> ICState:
+    """Entry point — build graph, inject deal, return final state."""
+    graph = build_graph(client, retriever)
 
-    initial_state: ICState = {
+    initial: ICState = {
         "company_name": deal.company_name,
         "industry": deal.industry,
         "deal_stage": deal.deal_stage,
@@ -91,11 +65,7 @@ def run_ic_simulation(deal: DealInput) -> ICState:
     }
 
     logger.info("IC simulation starting for '%s'", deal.company_name)
-    final_state: ICState = graph.invoke(initial_state)
-    logger.info(
-        "IC simulation complete — decision: %s",
-        final_state["chairman_output"].final_decision.value
-        if final_state.get("chairman_output")
-        else "N/A",
-    )
-    return final_state
+    final: ICState = graph.invoke(initial)
+    decision = final["chairman_output"].final_decision.value if final.get("chairman_output") else "N/A"
+    logger.info("IC simulation complete — decision: %s", decision)
+    return final

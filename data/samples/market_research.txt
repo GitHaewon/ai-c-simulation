@@ -1,0 +1,54 @@
+AI INFRASTRUCTURE MARKET RESEARCH — Q1 2025
+Source: Synthesis Research Partners
+
+=== MARKET OVERVIEW ===
+
+The global AI infrastructure market reached $38B in 2024 and is projected to grow
+at a 38% CAGR to $250B by 2028. Key demand drivers include:
+
+1. Hyperscaler capex: AWS, Azure, and GCP combined AI infrastructure spend grew
+   240% YoY in 2024, with $150B+ committed for 2025.
+2. Enterprise AI adoption: 67% of Fortune 500 companies now have active AI
+   initiatives, up from 31% in 2022.
+3. Model complexity: Average LLM parameter count grew 10x between 2022 and 2024,
+   increasing demand for optimisation services.
+
+=== COMPETITIVE LANDSCAPE ===
+
+Direct competitors to AI infrastructure optimisation players:
+- Large hyperscalers (AWS SageMaker, Azure ML): broad but not specialised
+- NVIDIA DGX Cloud: hardware-first, high cost
+- Scale AI: data-centric, limited model optimisation
+- Modal Labs: developer-focused, smaller enterprise footprint
+
+Differentiation factors that command premium valuation (EV/Revenue multiples):
+- Proprietary dataset or model IP:     8x-14x EV/Revenue
+- Strong NRR (>120%):                  8x-12x EV/Revenue
+- Commodity tooling:                   3x-6x EV/Revenue
+
+=== MACRO & RATE ENVIRONMENT ===
+
+Federal Funds Rate (Q1 2025): 4.5%
+Impact on AI valuations: Multiple compression of 15-25% vs 2021 peak.
+EV/Forward Revenue for AI SaaS (public comparables): median 9.2x, range 5x-18x.
+
+Interest rate sensitivity: Each 100bps rate increase historically compresses
+AI SaaS EV/Revenue multiples by 3-5%.
+
+=== RISK FACTORS IN SECTOR ===
+
+1. Regulatory: EU AI Act enforcement begins mid-2025. Models above 10^25 FLOPs
+   require registration and compliance audits. Timeline: 6-18 months.
+2. Commoditisation: Open-source models (LLaMA, Mistral) reducing barriers to entry.
+3. Key-person risk: Talent concentration in <500 AI researchers globally.
+4. Customer concentration: Median enterprise AI vendor has 3-4 customers
+   representing 50-70% of ARR at Series B stage.
+
+=== COMPARABLE EXIT TRANSACTIONS (2022-2024) ===
+
+- Mosaic ML acquired by Databricks:   $1.3B, 13x ARR
+- MosaicML (pre-acq) Series B:        $220M at $2.6B valuation
+- Inflection AI acqui-hire:            Not disclosed
+- Cohere Series C:                     $450M at $2.2B, ~9x ARR
+
+Median EV/Revenue at exit for AI infrastructure: 8-11x

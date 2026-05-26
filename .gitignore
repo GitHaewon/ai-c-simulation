@@ -50,6 +50,7 @@ logs/
 # Data (large or sensitive files)
 data/raw/
 data/output/
+data/chroma/
 *.csv
 *.xlsx
 *.json
