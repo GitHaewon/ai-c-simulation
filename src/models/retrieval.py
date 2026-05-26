@@ -8,6 +8,7 @@ class ChunkMetadata(BaseModel):
     date: str = ""
     deal_id: str = ""
     chunk_index: int = 0
+    company_name: str = ""  # entity match filter — always set when indexing real data
 
     def to_chroma_dict(self) -> dict:
         """ChromaDB only accepts flat str/int/float/bool metadata values."""
@@ -18,11 +19,13 @@ class ChunkMetadata(BaseModel):
             "date": self.date,
             "deal_id": self.deal_id,
             "chunk_index": self.chunk_index,
+            "company_name": self.company_name,
         }
 
     @classmethod
     def from_chroma_dict(cls, d: dict) -> "ChunkMetadata":
-        return cls(**d)
+        known = {f for f in cls.model_fields}
+        return cls(**{k: v for k, v in d.items() if k in known})
 
 
 class Chunk(BaseModel):

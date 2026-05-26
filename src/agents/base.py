@@ -26,7 +26,9 @@ class BaseAgent(ABC):
     # ── LangGraph callable ────────────────────────────────────────────────────
 
     def __call__(self, state: ICState) -> dict:
-        logger.info("[%s] starting", self.agent_id)
+        # Cache company name so _retrieve_context can apply entity filter.
+        self._current_company: str = state.get("company_name", "")
+        logger.info("[%s] starting (company='%s')", self.agent_id, self._current_company)
         try:
             result = self.run(state)
             logger.info("[%s] complete", self.agent_id)
@@ -52,9 +54,27 @@ class BaseAgent(ABC):
         if self._retriever is None:
             return ""
         from src.tools.hybrid_retriever import HybridRetriever
+
+        # Entity match filter: only retrieve chunks for the current company.
+        company = getattr(self, "_current_company", "")
+        if company:
+            entity_filter: dict = {"company_name": company}
+            if metadata_filter:
+                # Merge — company filter takes priority.
+                entity_filter.update(metadata_filter)
+            metadata_filter = entity_filter
+            logger.debug("[%s] retrieve with entity filter: company='%s'", self.agent_id, company)
+
         result = self._retriever.retrieve(query, top_k=5, metadata_filter=metadata_filter)
+
+        if not result.chunks:
+            logger.warning(
+                "[%s] No chunks found for company='%s' — RAG context empty",
+                self.agent_id, company,
+            )
+            return ""
+
         raw = HybridRetriever.format_context_with_citations(result)
-        # Truncate to stay within prompt token budget.
         return raw[:_MAX_CONTEXT_CHARS] if len(raw) > _MAX_CONTEXT_CHARS else raw
 
     def _build_deal_summary(self, state: ICState) -> str:

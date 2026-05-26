@@ -55,6 +55,13 @@ class ICPipeline:
             if progress_cb:
                 progress_cb(msg)
 
+        log(f"▶ DART 공시 데이터 확인 중: {deal.company_name} …")
+        dart_chunks = self._ensure_dart_indexed(deal.company_name)
+        if dart_chunks > 0:
+            log(f"  ✓ DART 데이터 인덱싱 완료: {dart_chunks}개 청크")
+        elif dart_chunks == 0:
+            log("  ℹ DART 데이터: 이미 인덱싱됨 또는 API 키 미설정")
+
         log(f"▶ Step 1 / 3 — Multi-agent IC debate for {deal.company_name} …")
         state = run_ic_simulation(deal, self.client, self.retriever)
 
@@ -79,6 +86,23 @@ class ICPipeline:
 
         log("✓ IC simulation complete.")
         return PipelineResult(state=state, simulation=simulation, memo=memo, deal=deal)
+
+    def _ensure_dart_indexed(self, company_name: str) -> int:
+        """
+        회사별 DART 데이터가 인덱싱되지 않은 경우 자동 인덱싱.
+        DART_API_KEY 없으면 0 반환 (graceful degradation).
+        반환: 새로 인덱싱된 청크 수 (이미 있으면 -1, 인덱싱 없으면 0)
+        """
+        from src.tools.dart_client import DartClient
+        from src.tools.dart_indexer import index_company_dart_data, is_already_indexed
+
+        dart_client = DartClient()
+
+        if is_already_indexed(company_name, self.retriever):
+            return -1   # 이미 인덱싱됨
+
+        n = index_company_dart_data(company_name, self.retriever, dart_client)
+        return n
 
     @staticmethod
     def _build_financials(deal: DealInput) -> DealFinancials:

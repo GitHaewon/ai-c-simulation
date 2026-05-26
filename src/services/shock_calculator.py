@@ -109,7 +109,7 @@ def apply_interest_rate_shock(f: DealFinancials, delta_rate: float) -> ScenarioM
     exit_val = compute_exit_value(exit_rev, new_multiple, f.debt_usd_m)
     flows = build_cash_flows(f.invested_capital_usd_m, exit_val, f.holding_period_years)
 
-    label = f"Rate +{delta_rate * 100:.0f}bps"
+    label = f"Rate +{int(delta_rate * 10000)}bps"
     logger.debug("Shock [%s]: multiple %.2f→%.2f, exit_val $%.1fM", label, f.ev_revenue_multiple, new_multiple, exit_val)
     return ScenarioMetrics(
         label=label,

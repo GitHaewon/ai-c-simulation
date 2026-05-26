@@ -1,13 +1,23 @@
-import logging
+"""
+Entry point: streamlit run app.py
+"""
+import sys
+from pathlib import Path
 
+_root = Path(__file__).resolve().parent
+if str(_root) not in sys.path:
+    sys.path.insert(0, str(_root))
+
+from dotenv import load_dotenv
+load_dotenv()
+
+import logging
 import streamlit as st
 
 from app.components.sidebar import render_sidebar
 from app.pages.tab_debate import render as render_debate
 from app.pages.tab_ic_memo import render as render_ic_memo
 from app.pages.tab_shock_simulation import render as render_shock
-
-logger = logging.getLogger(__name__)
 
 st.set_page_config(
     page_title="AI 투자위원회 시뮬레이터",
@@ -16,6 +26,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# ── 상단 헤더 ─────────────────────────────────────────────────────────────────
 st.markdown(
     "<h1 style='letter-spacing:-0.5px;'>💼 AI 투자위원회 시뮬레이션 시스템</h1>",
     unsafe_allow_html=True,
@@ -28,8 +39,7 @@ st.divider()
 
 inputs = render_sidebar()
 
-# ── Run pipeline ──────────────────────────────────────────────────────────────
-
+# ── 파이프라인 실행 ────────────────────────────────────────────────────────────
 if inputs["run"]:
     from src.core.pipeline import ICPipeline
     from src.models.deal import DealInput
@@ -38,30 +48,26 @@ if inputs["run"]:
         company_name=inputs["company_name"],
         industry=inputs["industry"],
         deal_stage=inputs.get("deal_stage", ""),
-        investment_amount_usd_m=float(inputs.get("investment_amount", 0) or 0),
+        investment_amount_usd_m=float(inputs.get("investment_amount") or 0),
         shock_scenario=inputs.get("shock_input", ""),
     )
 
-    log_lines: list[str] = []
-
     with st.status("투자위원회 시뮬레이션 실행 중 …", expanded=True) as status:
-        def _cb(msg: str) -> None:
-            log_lines.append(msg)
-            status.write(msg)
-
         try:
             pipeline = ICPipeline.build()
-            result = pipeline.run(deal, progress_cb=_cb)
+            result = pipeline.run(
+                deal,
+                progress_cb=lambda m: status.write(m),
+            )
             st.session_state["pipeline_result"] = result
             status.update(label="✅ 시뮬레이션 완료", state="complete")
         except Exception as exc:
-            logger.error("Pipeline failed: %s", exc, exc_info=True)
+            logging.getLogger(__name__).error("Pipeline failed: %s", exc, exc_info=True)
             st.session_state.pop("pipeline_result", None)
             status.update(label=f"❌ 오류 발생: {exc}", state="error")
             st.stop()
 
-# ── Tabs ──────────────────────────────────────────────────────────────────────
-
+# ── 탭 레이아웃 ───────────────────────────────────────────────────────────────
 result = st.session_state.get("pipeline_result")
 
 tab_memo, tab_shock, tab_debate = st.tabs([

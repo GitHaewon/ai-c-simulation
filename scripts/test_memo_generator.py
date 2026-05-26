@@ -165,8 +165,9 @@ def test_full_memo_pipeline() -> None:
     md_path = OUT_DIR / "acme_ai_memo.md"
     md_content = export_markdown(memo, md_path)
     print(f"MD    → {md_path}")
-    print("\n── Markdown Preview (first 600 chars) ───────────────────")
-    print(md_content[:600], "…")
+    print("\n-- Markdown Preview (first 600 chars) -------------------")
+    preview = md_content[:600].encode(sys.stdout.encoding or "utf-8", errors="replace").decode(sys.stdout.encoding or "utf-8")
+    print(preview, "...")
 
     # PPTX
     pptx_path = OUT_DIR / "acme_ai_memo.pptx"
