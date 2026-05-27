@@ -25,6 +25,14 @@ class DealFinancials(BaseModel):
         default=0.0, ge=0.0, le=1.0,
         description="Fraction of revenue denominated in foreign currency",
     )
+    company_type: str = Field(
+        default="growth_stage",
+        description="Company classification: mega_cap_public | large_cap_public | growth_stage | startup | pre_ipo",
+    )
+    valuation_basis: str = Field(
+        default="revenue",
+        description="Primary valuation method: ebitda_derived | revenue | arr",
+    )
 
 
 class ShockScenario(BaseModel):

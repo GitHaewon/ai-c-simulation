@@ -8,8 +8,6 @@ logger = logging.getLogger(__name__)
 
 QUORUM = 3
 
-_VOTE_COLOR = {Vote.APPROVE: "green", Vote.REJECT: "red", Vote.CONDITIONAL: "orange"}
-
 
 class ChairmanAgent(BaseAgent):
     agent_id = "chairman"
@@ -19,7 +17,6 @@ class ChairmanAgent(BaseAgent):
         final_decision = self._tally(vote_tally)
         quorum_met = len(vote_tally) >= QUORUM
 
-        # LLM writes rationale + conditions; tallying stays deterministic.
         rationale, conditions = self._generate_rationale(state, vote_tally, final_decision)
 
         output = ChairmanOutput(
@@ -37,7 +34,7 @@ class ChairmanAgent(BaseAgent):
         self, state: ICState, vote_tally: dict[str, Vote], decision: Vote
     ) -> tuple[str, list[str]]:
         if not self._client:
-            return "[placeholder] Connect LLM to generate rationale.", []
+            return "LLM 미연결 — 실제 투자위원장 결의 생성 불가.", []
 
         summaries = "\n".join(
             f"- {agent}: {vote.value}" for agent, vote in vote_tally.items()
@@ -46,15 +43,15 @@ class ChairmanAgent(BaseAgent):
         user_msg = (
             "## Deal Summary\n"
             f"{self._build_deal_summary(state)}\n\n"
-            "## Vote Tally\n"
+            "## 투표 결과\n"
             f"{summaries}\n\n"
-            "## Final Decision (from voting engine)\n"
+            "## 최종 결정 (의결 엔진)\n"
             f"{decision.value}\n\n"
-            "## Agent Deliberation Summaries\n"
+            "## 위원별 심의 요약\n"
             f"{agent_outputs}\n\n"
             "## Task\n"
-            "Write the chairman's resolution rationale and list any conditions. "
-            "Return JSON as specified in your instructions."
+            "투자위원장으로서 결의 사유와 조건을 작성하십시오. "
+            "명시된 형식의 JSON을 반환하십시오."
         )
         try:
             raw = self._call_structured(user_msg)
@@ -62,8 +59,8 @@ class ChairmanAgent(BaseAgent):
             conditions = raw.get("conditions", [])
             return rationale, conditions
         except Exception as exc:
-            logger.error("[chairman] LLM failed: %s", exc)
-            return "[placeholder] LLM call failed.", []
+            logger.error("[chairman] LLM 실패: %s", exc)
+            return "결의 사유 생성 실패 — 원인을 확인하십시오.", []
 
     # ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -92,16 +89,16 @@ class ChairmanAgent(BaseAgent):
     def _format_agent_outputs(state: ICState) -> str:
         parts: list[str] = []
         for key, label in [
-            ("financial_output", "Financial Analyst"),
-            ("risk_output", "Risk Officer"),
-            ("bull_output", "Bull Advocate"),
-            ("bear_output", "Bear Advocate"),
+            ("financial_output", "재무 분석관"),
+            ("risk_output", "리스크 심사역"),
+            ("bull_output", "강세론 위원"),
+            ("bear_output", "약세론 위원"),
         ]:
             out = state.get(key)
             if out:
                 parts.append(
                     f"### {label} ({out.vote.value})\n"
-                    f"Findings: {'; '.join(out.findings[:3])}\n"
-                    f"Rationale: {out.vote_rationale}"
+                    f"주요 발견: {'; '.join(out.findings[:3])}\n"
+                    f"투표 사유: {out.vote_rationale}"
                 )
-        return "\n\n".join(parts) or "No agent outputs available."
+        return "\n\n".join(parts) or "위원 심의 결과 없음."
